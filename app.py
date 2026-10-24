@@ -1,0 +1,45 @@
+"""Linya: a queue system for the campus registrar (CCC181 Week 3).
+
+Run it with:
+    flask --app app run --debug
+then open http://127.0.0.1:5000
+"""
+from flask import Flask, render_template
+
+app = Flask(__name__)
+app.secret_key = "dev-only-change-me"  # needed for flash messages (Part 4)
+
+# Services offered at the registrar window.
+SERVICES = [
+    {"id": 1, "name": "Transcript of Records (TOR)"},
+    {"id": 2, "name": "Certificates (enrollment, good moral, etc.)"},
+    {"id": 3, "name": "Enrollment concerns"},
+    {"id": 4, "name": "Submit requirements"},
+]
+
+# Each ticket: number, name, student_id, email, service_id, priority, window, status
+# status is one of: waiting, called, served, no-show
+# window is None until staff call the ticket (then e.g. 3 for "Window 3")
+TICKETS = [
+    {"number": 1, "name": "Ana Reyes", "student_id": "2023-0001",
+     "email": "ana@school.edu", "service_id": 1,
+     "priority": False, "window": None, "status": "waiting"},
+    {"number": 2, "name": "Ben Cruz", "student_id": "2022-0457",
+     "email": "ben@school.edu", "service_id": 2,
+     "priority": True, "window": None, "status": "waiting"},
+]
+
+
+@app.route("/")
+def index():
+    return render_template("index.html")
+
+
+@app.route("/queue/<int:ticket_id>")
+def ticket(ticket_id):
+    # Temporary: Part 6 replaces this with the real My place page.
+    return render_template("ticket.html", ticket_id=ticket_id)
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
