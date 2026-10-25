@@ -1,6 +1,6 @@
 # Personas: Linya (Campus Registrar)
 
-Both personas come from my observation at the registrar while requesting my own TOR, from interviews with students waiting there, and from a short conversation with registrar staff.
+Both personas come from my observation at the registrar while requesting my own TOR, from observation with students waiting there, and with registrar staff.
 
 ---
 
@@ -11,7 +11,7 @@ Both personas come from my observation at the registrar while requesting my own 
 
 | | |
 | --- | --- |
-| **Photo or sketch** | None |
+| **Photo or sketch** | (Screenshots/EddieLamisJr..png) |
 | **Age, role and background** | 21, graduating student who needs his TOR for job applications and clearance |
 | **Goals** | Get his TOR without missing class; sit down on the benches instead of standing while waiting for his number, know when his turn is coming |
 | **Frustrations** | Standing in line for hours although benches are free *(observation)*;  Not knowing how many people are ahead, uncertainty about when his turn is coming *(observation)*; extra waiting when several procedures are needed *(document review)* |
@@ -48,11 +48,11 @@ During enrollment week, Eddie arrives at the registrar and sees a long line. He 
 
 | | |
 | --- | --- |
-| **Photo or sketch** | None |
+| **Photo or sketch** | (Screenshots/Ms.Elena.png) |
 | **Age, role and background** | Registrar staff who processes TOR requests and other transactions at the counter |
 | **Goals** | Call students in order; handle many requests during enrollment; keep service orderly |
 | **Frustrations** | High volume of students during enrollment, with several requests to manage at once *(observation)*; students asking staff how long the wait will be *(observation)* |
-| **Devices and context** | Desktop computer at the counter, using it between handling requests † |
+| **Devices and context** | Desktop computer at the counter, using it between handling requests † ,, † Assumed, not yet confirmed with staff.|
 | **Tech comfort** | Medium: comfortable with browsers and basic school systems † |
 | **Accessibility needs** | Clear button labels and strong contrast for fast clicking under pressure |
 
@@ -74,4 +74,4 @@ Ms. Elena finishes processing a TOR and turns to her screen. She opens the Linya
 1. Because staff handle one kind of request at a time, the service filter must be at the top of the dashboard.
 2. Because they work fast under pressure, "Call next" must be the largest button, and every action must be one click.
 3. Because they scan many rows quickly, each button must name its ticket ("Serve #14"), with a matching aria-label.
-4. Because the registrar must verify students, the join form must require a valid Student ID.
+4. Because the registrar must verify students, the join form require a valid Student ID, if a student.
