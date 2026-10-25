@@ -4,9 +4,9 @@
 
 | Screen | Score | Screenshot |
 | --- | --- | --- |
-| Join | [ 97 ] | ![Join](AccessScreenshots/Join.png) |
-| My place | [ 99 ] | ![My place](AccessScreenshots/Queue.png) |
-| Staff dashboard | [ 99 ] | ![Staff](AccessScreenshots/Staff.png) |
+| Join | [ 100 ] | ![Join](Screenshots/Join.png) |
+| My place | [ 100 ] | ![My place](Screenshots/Queue.png) |
+| Staff dashboard | [ 100 ] | ![Staff](Screenshots/Staff.png) |
 
 ## 9b. Keyboard-only test
 
