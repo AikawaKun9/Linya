@@ -19,8 +19,8 @@
 
 | Check | Join | My place | Staff |
 | --- | --- | --- | --- |
-| Every input has a visible label | ✅ | ✅ | ✅ |
-| Error messages say what to do, in text | ✅ | ✅  ✅| |
+| Every input has a visible label | ✅ | N/A | ✅ |
+| Error messages say what to do, in text | ✅ | N/A | ✅ |
 | Status shown in words, not only color | ✅ | ✅ | ✅ |
 | Readable at 375 px, no sideways page scroll | ✅ | ✅ | Table Goes Sideways |
 | Buttons about 44 × 44 px | ✅ | ✅ | ✅ |

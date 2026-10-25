@@ -5,7 +5,6 @@ Run it with:
 then open http://127.0.0.1:5000
 """
 import re
-import time
 
 from flask import Flask, abort, flash, redirect, render_template, request, url_for
 
@@ -46,7 +45,6 @@ def join():
     student_id = form.get("student_id", "").strip()
     service_id = form.get("service_id", type=int)
     priority = form.get("priority") == "on"
-    time.sleep(2)
 
     errors = {}
     if not name:

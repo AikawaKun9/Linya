@@ -10,3 +10,12 @@
 /* tap targets of about 44 px */
 .btn, .form-control, .form-select { min-height: 44px; }
 .form-check-input { width: 1.4em; height: 1.4em; }
+
+/* Visible keyboard focus everywhere */
+a:focus-visible, button:focus-visible, .btn:focus-visible,
+.form-control:focus-visible, .form-select:focus-visible,
+.form-check-input:focus-visible {
+  outline: 3px solid #ffbf47;
+  outline-offset: 2px;
+}
+.navbar .nav-link:focus-visible { outline-color: #ece979; }
