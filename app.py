@@ -22,7 +22,7 @@ SERVICES = [
 # window is None until staff call the ticket
 TICKETS = [
     {"number": 1, "name": "Ana Reyes", "student_id": "2023-0001",
-     "service_id": 1, "priority": False, "window": 3, "status": "called"},
+     "service_id": 1, "priority": False, "window": None, "status": "waiting"},
     {"number": 2, "name": "Ben Cruz", "student_id": "2022-0457",
      "service_id": 2, "priority": True, "window": None, "status": "waiting"},
 ]
@@ -62,20 +62,19 @@ def join():
     number = TICKETS[-1]["number"] + 1 if TICKETS else 1
     TICKETS.append({
         "number": number, "name": name, "student_id": student_id or None,
-        "service_id": service_id, "p    riority": priority,
+        "service_id": service_id, "priority": priority,
         "window": None, "status": "waiting",
     })
     flash(f"You joined the queue. Your ticket is #{number}.", "success")
     return redirect(url_for("ticket", ticket_id=number))
 
-
-@app.route("/staff")
-def staff_dashboard():
-    return "Staff dashboard coming soon"
-
-
 def find_ticket(ticket_id):
     return next((t for t in TICKETS if t["number"] == ticket_id), None)
+
+
+def queue_order(t):
+    """Priority-lane tickets come first, then by ticket number."""
+    return (not t.get("priority", False), t["number"])
 
 
 def count_ahead(t):
@@ -83,7 +82,7 @@ def count_ahead(t):
     return sum(1 for x in TICKETS
                if x["service_id"] == t["service_id"]
                and x["status"] == "waiting"
-               and x["number"] < t["number"])
+               and queue_order(x) < queue_order(t))
 
 
 @app.get("/queue/<int:ticket_id>")
@@ -106,6 +105,55 @@ def leave_queue(ticket_id):
     flash("You left the queue.", "info")
     return redirect(url_for("index"))
 
+@app.get("/staff")
+def staff_dashboard():
+    service_id = request.args.get("service_id", type=int)
+    active = [t for t in TICKETS if t["status"] in ("waiting", "called")]
+    if service_id:
+        active = [t for t in active if t["service_id"] == service_id]
+    # called tickets first, then waiting ones in queue order
+    active.sort(key=lambda t: (t["status"] != "called", queue_order(t)))
+
+    names = {s["id"]: s["name"] for s in SERVICES}
+    counts = {s["id"]: sum(1 for t in TICKETS
+                           if t["service_id"] == s["id"] and t["status"] == "waiting")
+              for s in SERVICES}
+    return render_template("staff.html", queue=active, services=SERVICES,
+                           names=names, counts=counts, selected=service_id)
+
+
+@app.post("/staff/call-next")
+def call_next():
+    service_id = request.form.get("service_id", type=int)
+    window = request.form.get("window", type=int)
+
+    if not window or window < 1:
+        flash("Enter a window number (1 or higher).", "danger")
+        return redirect(url_for("staff_dashboard", service_id=service_id))
+
+    waiting = [t for t in TICKETS if t["status"] == "waiting"
+               and (not service_id or t["service_id"] == service_id)]
+    if not waiting:
+        flash("No one is waiting.", "warning")
+        return redirect(url_for("staff_dashboard", service_id=service_id))
+
+    nxt = min(waiting, key=queue_order)
+    nxt["status"] = "called"
+    nxt["window"] = window
+    flash(f"Called ticket #{nxt['number']} to Window {window}.", "success")
+    return redirect(url_for("staff_dashboard", service_id=service_id))
+
+
+@app.post("/staff/tickets/<int:ticket_id>/<action>")
+def staff_action(ticket_id, action):
+    new_status = {"serve": "served", "no-show": "no-show"}.get(action)
+    t = find_ticket(ticket_id)
+    if t is None or new_status is None:
+        abort(404)
+    t["status"] = new_status
+    flash(f"Ticket #{ticket_id} marked {new_status}.", "info")
+    return redirect(url_for("staff_dashboard",
+                            service_id=request.form.get("service_id", type=int)))
 
 if __name__ == "__main__":
     app.run(debug=True)

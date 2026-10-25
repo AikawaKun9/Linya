@@ -1,1 +1,3 @@
   /* Linya custom styles. Bootstrap handles the rest. */
+/* Part 9 asks for tap targets of about 44 px */
+.table .btn { min-height: 44px; }
