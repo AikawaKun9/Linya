@@ -10,7 +10,7 @@
 | **Student ID** | 2024-0673  |
 | **Section** | [  ] |
 | **Date** | October 25, 2026 |
-| **Pull request** |  |
+| **Pull request** | https://github.com/AikawaKun9/Linya/pull/2 |
 
 ## 2. Personas
 
