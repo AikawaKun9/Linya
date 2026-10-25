@@ -1,0 +1,21 @@
+  /* Linya custom styles. Bootstrap handles the rest. */
+/* Part 9 asks for tap targets of about 44 px */
+.table .btn { min-height: 44px; }
+
+/* Part 9: accessibility fixes */
+.navbar .nav-link { color: #fff; }
+.navbar .nav-link.active { font-weight: 700; text-decoration: underline; }
+.navbar .nav-link:hover { text-decoration: underline; }
+
+/* tap targets of about 44 px */
+.btn, .form-control, .form-select { min-height: 44px; }
+.form-check-input { width: 1.4em; height: 1.4em; }
+
+/* Visible keyboard focus everywhere */
+a:focus-visible, button:focus-visible, .btn:focus-visible,
+.form-control:focus-visible, .form-select:focus-visible,
+.form-check-input:focus-visible {
+  outline: 3px solid #ffbf47;
+  outline-offset: 2px;
+}
+.navbar .nav-link:focus-visible { outline-color: #ece979; }

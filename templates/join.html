@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Join the queue · Linya{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-md-8 col-lg-6">
+    <h1 class="h3 mb-3">Join the queue</h1>
+
+    <form method="post" action="{{ url_for('join') }}" novalidate id="join-form">
+
+      <div class="mb-3">
+        <label for="service_id" class="form-label">Service</label>
+        <select id="service_id" name="service_id" required
+                class="form-select {% if errors.service_id %}is-invalid{% endif %}"
+                {% if errors.service_id %}aria-describedby="service-error"{% endif %}>
+          <option value="">Choose a service…</option>
+          {% for s in services %}
+            <option value="{{ s.id }}"
+              {% if form.get('service_id') == s.id|string %}selected{% endif %}>{{ s.name }}</option>
+          {% endfor %}
+        </select>
+        {% if errors.service_id %}
+          <div id="service-error" class="invalid-feedback">{{ errors.service_id }}</div>
+        {% endif %}
+      </div>
+
+      <div class="mb-3">
+        <label for="name" class="form-label">Your name or nickname</label>
+        <input id="name" name="name" type="text" autocomplete="name" required
+               class="form-control {% if errors.name %}is-invalid{% endif %}"
+               value="{{ form.get('name', '') }}"
+               {% if errors.name %}aria-describedby="name-error"{% endif %}>
+        {% if errors.name %}
+          <div id="name-error" class="invalid-feedback">{{ errors.name }}</div>
+        {% endif %}
+      </div>
+
+      <div class="mb-3">
+        <label for="student_id" class="form-label">Student ID (optional)</label>
+        <input id="student_id" name="student_id" type="text" inputmode="numeric"
+               autocomplete="off" placeholder="2022-0457"
+               class="form-control {% if errors.student_id %}is-invalid{% endif %}"
+               value="{{ form.get('student_id', '') }}"
+               aria-describedby="student-id-hint{% if errors.student_id %} student-id-error{% endif %}">
+        <div id="student-id-hint" class="form-text">
+          Year you joined, then your number (YYYY-####). Leave blank if you prefer.
+        </div>
+        {% if errors.student_id %}
+          <div id="student-id-error" class="invalid-feedback">{{ errors.student_id }}</div>
+        {% endif %}
+      </div>
+
+      <div class="form-check mb-3">
+        <input class="form-check-input" type="checkbox" id="priority" name="priority"
+               {% if form.get('priority') %}checked{% endif %}>
+        <label class="form-check-label" for="priority">
+          Priority lane (PWD, senior citizen, pregnant)
+        </label>
+        <div class="form-text">Show your ID at the window.</div>
+      </div>
+
+      <button type="submit" class="btn btn-primary w-100">Get a ticket</button>
+      <p class="form-text mt-2">We only collect what the registrar needs to call you.</p>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Linya · Registrar queue{% endblock %}
+
+{% block content %}
+<div class="text-center py-5">
+  <h1 class="display-4 fw-bold">Linya</h1>
+  <p class="lead mb-4">
+    Get a queue number for the registrar and see when it's your turn, so you can sit down instead of standing in line.
+  </p>
+  <a class="btn btn-primary btn-lg" href="{{ url_for('join_form') }}">Join the queue</a>
+</div>
+{% endblock %}

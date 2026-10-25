@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}Staff dashboard · Linya{% endblock %}
+
+{% block content %}
+{% set badge_class = {
+  'waiting': 'text-bg-warning',
+  'called': 'text-bg-success'
+} %}
+
+<h1 class="h3 mb-3">Staff dashboard</h1>
+
+<div class="row g-3 align-items-end mb-4">
+  <div class="col-12 col-md-5">
+    <form method="get" action="{{ url_for('staff_dashboard') }}" class="row g-2 align-items-end">
+      <div class="col">
+        <label for="service_filter" class="form-label mb-1">Service</label>
+        <select id="service_filter" name="service_id" class="form-select">
+          <option value="">All services</option>
+          {% for s in services %}
+            <option value="{{ s.id }}" {% if selected == s.id %}selected{% endif %}>
+              {{ s.name }} ({{ counts[s.id] }} waiting)
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-outline-primary">Show</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="col-12 col-md-7">
+    <form method="post" action="{{ url_for('call_next') }}" class="row g-2 align-items-end">
+      {% if selected %}<input type="hidden" name="service_id" value="{{ selected }}">{% endif %}
+      <div class="col-5 col-md-4">
+        <label for="window" class="form-label mb-1">Window number</label>
+        <input id="window" name="window" type="number" min="1" value="1" required
+               class="form-control form-control-lg">
+      </div>
+      <div class="col">
+        <button type="submit" class="btn btn-primary btn-lg w-100">Call next</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="queue-area">
+{% if queue %}
+<div class="table-responsive">
+  <table class="table table-bordered align-middle">
+    <caption>Waiting and called tickets{% if selected %} for {{ names[selected] }}{% endif %}. Priority-lane tickets are called first.</caption>
+    <thead class="table-light">
+      <tr>
+        <th scope="col">#</th>
+        <th scope="col">Name</th>
+        <th scope="col">Service</th>
+        <th scope="col">Status</th>
+        <th scope="col">Window</th>
+        <th scope="col">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for t in queue %}
+      <tr class="{% if t.status == 'called' %}table-success{% endif %}">
+        <th scope="row">{{ t.number }}</th>
+        <td>
+          {{ t.name }}
+          {% if t.priority %}<span class="badge text-bg-info">Priority</span>{% endif %}
+        </td>
+        <td>{{ names[t.service_id] }}</td>
+        <td><span class="badge {{ badge_class[t.status] }}">{{ t.status|capitalize }}</span></td>
+        <td>{{ t.window or '—' }}</td>
+        <td>
+          <div class="d-flex gap-2">
+            {% if t.status == 'called' %}
+            <form method="post" action="{{ url_for('staff_action', ticket_id=t.number, action='serve') }}">
+              {% if selected %}<input type="hidden" name="service_id" value="{{ selected }}">{% endif %}
+              <button type="submit" class="btn btn-success btn-sm"
+                      aria-label="Serve #{{ t.number }}: mark ticket {{ t.number }} as served">Serve #{{ t.number }}</button>
+            </form>
+            {% endif %}
+            <form method="post" action="{{ url_for('staff_action', ticket_id=t.number, action='no-show') }}">
+              {% if selected %}<input type="hidden" name="service_id" value="{{ selected }}">{% endif %}
+              <button type="submit" class="btn btn-outline-danger btn-sm"
+                      aria-label="No-show #{{ t.number }}: mark ticket {{ t.number }} as a no-show">No-show #{{ t.number }}</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="alert alert-light border text-center py-4" role="status">
+  No one is waiting right now.
+</div>
+{% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Reload only the queue table every 10 seconds, so the window number
+  // field and the service filter keep whatever staff typed or chose.
+  async function refreshQueue() {
+    if (document.hidden) return;
+    try {
+      const res = await fetch(window.location.href, { cache: "no-store" });
+      if (!res.ok) return;
+      const doc = new DOMParser().parseFromString(await res.text(), "text/html");
+      const fresh = doc.getElementById("queue-area");
+      const current = document.getElementById("queue-area");
+      if (fresh && current) current.innerHTML = fresh.innerHTML;
+    } catch (err) {
+      console.warn("Could not refresh queue", err);
+    }
+  }
+  setInterval(refreshQueue, 10000);
+</script>
+{% endblock %}
