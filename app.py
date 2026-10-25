@@ -5,6 +5,7 @@ Run it with:
 then open http://127.0.0.1:5000
 """
 import re
+import time
 
 from flask import Flask, abort, flash, redirect, render_template, request, url_for
 
@@ -45,6 +46,7 @@ def join():
     student_id = form.get("student_id", "").strip()
     service_id = form.get("service_id", type=int)
     priority = form.get("priority") == "on"
+    time.sleep(2)
 
     errors = {}
     if not name:
@@ -104,6 +106,15 @@ def leave_queue(ticket_id):
         t["status"] = "no-show"
     flash("You left the queue.", "info")
     return redirect(url_for("index"))
+
+
+@app.get("/queue/<int:ticket_id>/status.json")
+def ticket_status(ticket_id):
+    t = find_ticket(ticket_id)
+    if t is None:
+        abort(404)
+    return {"status": t["status"], "ahead": count_ahead(t), "window": t["window"]}
+
 
 @app.get("/staff")
 def staff_dashboard():

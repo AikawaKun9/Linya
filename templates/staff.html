@@ -44,6 +44,7 @@
   </div>
 </div>
 
+<div id="queue-area">
 {% if queue %}
 <div class="table-responsive">
   <table class="table table-bordered align-middle">
@@ -95,4 +96,26 @@
   No one is waiting right now.
 </div>
 {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Reload only the queue table every 10 seconds, so the window number
+  // field and the service filter keep whatever staff typed or chose.
+  async function refreshQueue() {
+    if (document.hidden) return;
+    try {
+      const res = await fetch(window.location.href, { cache: "no-store" });
+      if (!res.ok) return;
+      const doc = new DOMParser().parseFromString(await res.text(), "text/html");
+      const fresh = doc.getElementById("queue-area");
+      const current = document.getElementById("queue-area");
+      if (fresh && current) current.innerHTML = fresh.innerHTML;
+    } catch (err) {
+      console.warn("Could not refresh queue", err);
+    }
+  }
+  setInterval(refreshQueue, 10000);
+</script>
 {% endblock %}
