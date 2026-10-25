@@ -22,7 +22,7 @@ SERVICES = [
 # window is None until staff call the ticket
 TICKETS = [
     {"number": 1, "name": "Ana Reyes", "student_id": "2023-0001",
-     "service_id": 1, "priority": False, "window": None, "status": "waiting"},
+     "service_id": 1, "priority": False, "window": 3, "status": "called"},
     {"number": 2, "name": "Ben Cruz", "student_id": "2022-0457",
      "service_id": 2, "priority": True, "window": None, "status": "waiting"},
 ]
@@ -62,7 +62,7 @@ def join():
     number = TICKETS[-1]["number"] + 1 if TICKETS else 1
     TICKETS.append({
         "number": number, "name": name, "student_id": student_id or None,
-        "service_id": service_id, "priority": priority,
+        "service_id": service_id, "p    riority": priority,
         "window": None, "status": "waiting",
     })
     flash(f"You joined the queue. Your ticket is #{number}.", "success")
@@ -74,10 +74,37 @@ def staff_dashboard():
     return "Staff dashboard coming soon"
 
 
-@app.route("/queue/<int:ticket_id>")
+def find_ticket(ticket_id):
+    return next((t for t in TICKETS if t["number"] == ticket_id), None)
+
+
+def count_ahead(t):
+    """People still waiting ahead of this ticket, for the same service."""
+    return sum(1 for x in TICKETS
+               if x["service_id"] == t["service_id"]
+               and x["status"] == "waiting"
+               and x["number"] < t["number"])
+
+
+@app.get("/queue/<int:ticket_id>")
 def ticket(ticket_id):
-    # Temporary: Part 6 replaces this with the real My place page.
-    return render_template("ticket.html", ticket_id=ticket_id)
+    t = find_ticket(ticket_id)
+    if t is None:
+        abort(404)
+    service = next(s for s in SERVICES if s["id"] == t["service_id"])
+    return render_template("ticket.html", ticket=t, service=service,
+                           ahead=count_ahead(t))
+
+
+@app.post("/queue/<int:ticket_id>/leave")
+def leave_queue(ticket_id):
+    t = find_ticket(ticket_id)
+    if t is None:
+        abort(404)
+    if t["status"] in ("waiting", "called"):
+        t["status"] = "no-show"
+    flash("You left the queue.", "info")
+    return redirect(url_for("index"))
 
 
 if __name__ == "__main__":
