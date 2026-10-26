@@ -16,7 +16,7 @@
 
 **Eddie, the student waiting.** "Unsay purpose sa mga lingkoranan kung magbarog raman diay japon ta para molinya." Top tasks: join the queue (FR-01), check number and people ahead (FR-02), see the status change without refreshing (FR-04), see which window to go to (FR-08 ★), leave the queue (FR-10).
 
-**Ms. Elena, the registrar counter staff.** [Quote, or "No direct staff quote yet; this persona is based on my observation and what students told me."] Top tasks: view the waiting list by service (FR-09), call the next student and mark served or no-show (FR-03), set the window number (FR-08 ★).
+**Ms. Elena, the registrar counter staff.** "No direct staff quote yet; this persona is based on my observation and what students told me." Top tasks: view the waiting list by service (FR-09), call the next student and mark served or no-show (FR-03), set the window number (FR-08 ★).
 
 Full personas: [docs/week3/personas.md](personas.md)
 
