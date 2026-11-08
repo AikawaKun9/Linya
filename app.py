@@ -1,16 +1,17 @@
-"""Linya: a queue system for the campus registrar (CCC181 Week 3).
+"""Linya: a queue system for the campus registrar (CCC181 Week 4).
 
 Run it with:
     flask --app app run --debug
 then open http://127.0.0.1:5000
 """
-import re
 import os
+import re
+from datetime import timedelta, timezone
 
 from dotenv import load_dotenv
 from flask import Flask, abort, flash, redirect, render_template, request, url_for
 from flask_migrate import Migrate
-from sqlalchemy import func
+from sqlalchemy import and_, func, or_
 from sqlalchemy.exc import IntegrityError
 
 from models import Service, Ticket, Visitor, Window, db
@@ -24,6 +25,7 @@ app.config["SQLALCHEMY_ECHO"] = os.environ.get("SQLALCHEMY_ECHO") == "1"
 
 db.init_app(app)
 migrate = Migrate(app, db)
+
 
 @app.cli.command("seed")
 def seed():
@@ -48,12 +50,46 @@ def seed():
     print("Services and windows are ready.")
 
 
-@app.route("/")
-def index():
-    return render_template("index.html")
+#helpers
+
+PH_TIME = timezone(timedelta(hours=8))  # Philippine time has no daylight saving
+
+
+@app.template_filter("local")
+def local_time(value):
+    """Show a database time in Philippine time, e.g. Nov 02, 08:01 AM."""
+    return value.astimezone(PH_TIME).strftime("%b %d, %I:%M %p") if value else ""
+
 
 def all_services():
     return db.session.scalars(db.select(Service).order_by(Service.name)).all()
+
+
+def people_ahead(t):
+    """Count waiting tickets for the same service that will be called before t.
+
+    Priority tickets go first. Within the same lane, earlier join time goes first.
+    """
+    earlier_same_lane = and_(Ticket.is_priority == t.is_priority,
+                             Ticket.created_at < t.created_at)
+    if t.is_priority:
+        before_me = earlier_same_lane
+    else:
+        before_me = or_(Ticket.is_priority.is_(True), earlier_same_lane)
+
+    stmt = (db.select(func.count())
+            .select_from(Ticket)
+            .where(Ticket.service_id == t.service_id,
+                   Ticket.status == "waiting",
+                   before_me))
+    return db.session.scalar(stmt)
+
+
+#student pages
+
+@app.route("/")
+def index():
+    return render_template("index.html")
 
 
 @app.get("/join")
@@ -103,101 +139,100 @@ def join():
     return redirect(url_for("ticket", ticket_id=new_ticket.id))
 
 
-def find_ticket(ticket_id):
-    return next((t for t in TICKETS if t["number"] == ticket_id), None)
-
-
-def queue_order(t):
-    """Priority-lane tickets come first, then by ticket number."""
-    return (not t.get("priority", False), t["number"])
-
-
-def count_ahead(t):
-    """People still waiting ahead of this ticket, for the same service."""
-    return sum(1 for x in TICKETS
-               if x["service_id"] == t["service_id"]
-               and x["status"] == "waiting"
-               and queue_order(x) < queue_order(t))
-
-
 @app.get("/queue/<int:ticket_id>")
 def ticket(ticket_id):
-    t = find_ticket(ticket_id)
-    if t is None:
-        abort(404)
-    service = next(s for s in SERVICES if s["id"] == t["service_id"])
-    return render_template("ticket.html", ticket=t, service=service,
-                           ahead=count_ahead(t))
-
-
-@app.post("/queue/<int:ticket_id>/leave")
-def leave_queue(ticket_id):
-    t = find_ticket(ticket_id)
-    if t is None:
-        abort(404)
-    if t["status"] in ("waiting", "called"):
-        t["status"] = "no-show"
-    flash("You left the queue.", "info")
-    return redirect(url_for("index"))
+    t = db.get_or_404(Ticket, ticket_id)
+    return render_template("ticket.html", ticket=t, service=t.service,
+                           ahead=people_ahead(t))
 
 
 @app.get("/queue/<int:ticket_id>/status.json")
 def ticket_status(ticket_id):
-    t = find_ticket(ticket_id)
-    if t is None:
-        abort(404)
-    return {"status": t["status"], "ahead": count_ahead(t), "window": t["window"]}
+    t = db.get_or_404(Ticket, ticket_id)
+    return {"status": t.status, "ahead": people_ahead(t),
+            "window": t.window.number if t.window else None}
 
 
+@app.post("/queue/<int:ticket_id>/leave")
+def leave_queue(ticket_id):
+    t = db.get_or_404(Ticket, ticket_id)
+    if t.status in ("waiting", "called"):
+        t.status = "left"  # soft delete: the row stays for reports
+        t.finished_at = func.now()
+        db.session.commit()
+    flash("You left the queue.", "info")
+    return redirect(url_for("index"))
+
+
+#staff pages
 @app.get("/staff")
 def staff_dashboard():
     service_id = request.args.get("service_id", type=int)
-    active = [t for t in TICKETS if t["status"] in ("waiting", "called")]
+    stmt = (db.select(Ticket)
+            .where(Ticket.status.in_(["waiting", "called"]))
+            .order_by((Ticket.status == "called").desc(),
+                      Ticket.is_priority.desc(),
+                      Ticket.created_at))
     if service_id:
-        active = [t for t in active if t["service_id"] == service_id]
-    # called tickets first, then waiting ones in queue order
-    active.sort(key=lambda t: (t["status"] != "called", queue_order(t)))
+        stmt = stmt.where(Ticket.service_id == service_id)
+    queue = db.session.scalars(stmt).all()
 
-    names = {s["id"]: s["name"] for s in SERVICES}
-    counts = {s["id"]: sum(1 for t in TICKETS
-                           if t["service_id"] == s["id"] and t["status"] == "waiting")
-              for s in SERVICES}
-    return render_template("staff.html", queue=active, services=SERVICES,
+    services = all_services()
+    names = {s.id: s.name for s in services}
+    counts = dict(db.session.execute(
+        db.select(Ticket.service_id, func.count())
+        .where(Ticket.status == "waiting")
+        .group_by(Ticket.service_id)).all())
+    return render_template("staff.html", queue=queue, services=services,
                            names=names, counts=counts, selected=service_id)
 
 
 @app.post("/staff/call-next")
 def call_next():
     service_id = request.form.get("service_id", type=int)
-    window = request.form.get("window", type=int)
+    number = request.form.get("window", type=int)
+    window = db.session.scalar(db.select(Window).filter_by(number=number)) if number else None
 
-    if not window or window < 1:
-        flash("Enter a window number (1 or higher).", "danger")
+    if window is None:
+        flash("Enter a valid window number.", "danger")
         return redirect(url_for("staff_dashboard", service_id=service_id))
 
-    waiting = [t for t in TICKETS if t["status"] == "waiting"
-               and (not service_id or t["service_id"] == service_id)]
-    if not waiting:
+    stmt = (db.select(Ticket)
+            .where(Ticket.status == "waiting")
+            .order_by(Ticket.is_priority.desc(), Ticket.created_at)
+            .limit(1))
+    if service_id:
+        stmt = stmt.where(Ticket.service_id == service_id)
+    nxt = db.session.scalar(stmt)
+
+    if nxt is None:
         flash("No one is waiting.", "warning")
         return redirect(url_for("staff_dashboard", service_id=service_id))
 
-    nxt = min(waiting, key=queue_order)
-    nxt["status"] = "called"
-    nxt["window"] = window
-    flash(f"Called ticket #{nxt['number']} to Window {window}.", "success")
+    nxt.status = "called"
+    nxt.window = window
+    nxt.called_at = func.now()  # the database fills in the time
+    db.session.commit()
+    flash(f"Called ticket #{nxt.id} to Window {window.number}.", "success")
     return redirect(url_for("staff_dashboard", service_id=service_id))
+
+
+STAFF_ACTIONS = {"serve": "served", "no-show": "no-show"}
 
 
 @app.post("/staff/tickets/<int:ticket_id>/<action>")
 def staff_action(ticket_id, action):
-    new_status = {"serve": "served", "no-show": "no-show"}.get(action)
-    t = find_ticket(ticket_id)
-    if t is None or new_status is None:
+    new_status = STAFF_ACTIONS.get(action)
+    if new_status is None:
         abort(404)
-    t["status"] = new_status
+    t = db.get_or_404(Ticket, ticket_id)
+    t.status = new_status
+    t.finished_at = func.now()
+    db.session.commit()
     flash(f"Ticket #{ticket_id} marked {new_status}.", "info")
     return redirect(url_for("staff_dashboard",
                             service_id=request.form.get("service_id", type=int)))
+
 
 if __name__ == "__main__":
     app.run(debug=True)

@@ -18,7 +18,7 @@
           <option value="">All services</option>
           {% for s in services %}
             <option value="{{ s.id }}" {% if selected == s.id %}selected{% endif %}>
-              {{ s.name }} ({{ counts[s.id] }} waiting)
+              {{ s.name }} ({{ counts.get(s.id, 0) }} waiting)
             </option>
           {% endfor %}
         </select>
@@ -30,7 +30,7 @@
   </div>
 
   <div class="col-12 col-md-7">
-        <form method="post" action="{{ url_for('call_next') }}" class="row g-2 align-items-end">
+    <form method="post" action="{{ url_for('call_next') }}" class="row g-2 align-items-end">
       {% if selected %}<input type="hidden" name="service_id" value="{{ selected }}">{% endif %}
       <div class="col-5 col-md-4">
         <label for="window" class="form-label mb-1">Window number (counter)</label>
@@ -61,33 +61,35 @@
         <th scope="col">Service</th>
         <th scope="col">Status</th>
         <th scope="col">Window</th>
+        <th scope="col">Joined</th>
         <th scope="col">Actions</th>
       </tr>
     </thead>
     <tbody>
       {% for t in queue %}
       <tr class="{% if t.status == 'called' %}table-success{% endif %}">
-        <th scope="row">{{ t.number }}</th>
+        <th scope="row">{{ t.id }}</th>
         <td>
-          {{ t.name }}
-          {% if t.priority %}<span class="badge text-bg-info">Priority</span>{% endif %}
+          {{ t.visitor.name }}
+          {% if t.is_priority %}<span class="badge text-bg-info">Priority</span>{% endif %}
         </td>
         <td>{{ names[t.service_id] }}</td>
         <td><span class="badge {{ badge_class[t.status] }}">{{ t.status|capitalize }}</span></td>
-        <td>{{ t.window or '—' }}</td>
+        <td>{{ t.window.number if t.window else '—' }}</td>
+        <td>{{ t.created_at|local }}</td>
         <td>
           <div class="d-flex gap-2">
             {% if t.status == 'called' %}
-            <form method="post" action="{{ url_for('staff_action', ticket_id=t.number, action='serve') }}">
+            <form method="post" action="{{ url_for('staff_action', ticket_id=t.id, action='serve') }}">
               {% if selected %}<input type="hidden" name="service_id" value="{{ selected }}">{% endif %}
               <button type="submit" class="btn btn-success btn-sm"
-                      aria-label="Serve #{{ t.number }}: mark ticket {{ t.number }} as served">Serve #{{ t.number }}</button>
+                      aria-label="Serve #{{ t.id }}: mark ticket {{ t.id }} as served">Serve #{{ t.id }}</button>
             </form>
             {% endif %}
-            <form method="post" action="{{ url_for('staff_action', ticket_id=t.number, action='no-show') }}">
+            <form method="post" action="{{ url_for('staff_action', ticket_id=t.id, action='no-show') }}">
               {% if selected %}<input type="hidden" name="service_id" value="{{ selected }}">{% endif %}
               <button type="submit" class="btn btn-outline-danger btn-sm"
-                      aria-label="No-show #{{ t.number }}: mark ticket {{ t.number }} as a no-show">No-show #{{ t.number }}</button>
+                      aria-label="No-show #{{ t.id }}: mark ticket {{ t.id }} as a no-show">No-show #{{ t.id }}</button>
             </form>
           </div>
         </td>
