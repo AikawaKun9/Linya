@@ -25,6 +25,28 @@ app.config["SQLALCHEMY_ECHO"] = os.environ.get("SQLALCHEMY_ECHO") == "1"
 db.init_app(app)
 migrate = Migrate(app, db)
 
+@app.cli.command("seed")
+def seed():
+    """Add the starting services and windows if they are not there yet."""
+    services = [
+        ("Transcript of Records (TOR)", 15),
+        ("Certificates (enrollment, good moral, etc.)", 10),
+        ("Enrollment concerns", 10),
+        ("Submit requirements", 5),
+    ]
+    for name, minutes in services:
+        exists = db.session.scalar(db.select(Service).filter_by(name=name))
+        if exists is None:
+            db.session.add(Service(name=name, avg_minutes=minutes))
+
+    for number in (1, 2, 3, 4):
+        exists = db.session.scalar(db.select(Window).filter_by(number=number))
+        if exists is None:
+            db.session.add(Window(number=number))
+
+    db.session.commit()
+    print("Services and windows are ready.")
+
 SERVICES = [
     {"id": 1, "name": "Transcript of Records (TOR)"},
     {"id": 2, "name": "Certificates (enrollment, good moral, etc.)"},
