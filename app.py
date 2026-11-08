@@ -47,31 +47,18 @@ def seed():
     db.session.commit()
     print("Services and windows are ready.")
 
-SERVICES = [
-    {"id": 1, "name": "Transcript of Records (TOR)"},
-    {"id": 2, "name": "Certificates (enrollment, good moral, etc.)"},
-    {"id": 3, "name": "Enrollment concerns"},
-    {"id": 4, "name": "Submit requirements"},
-]
-
-# status is one of: waiting, called, served, no-show
-# window is None until staff call the ticket
-TICKETS = [
-    {"number": 1, "name": "Ana Reyes", "student_id": "2023-0001",
-     "service_id": 1, "priority": False, "window": None, "status": "waiting"},
-    {"number": 2, "name": "Ben Cruz", "student_id": "2022-0457",
-     "service_id": 2, "priority": True, "window": None, "status": "waiting"},
-]
-
 
 @app.route("/")
 def index():
     return render_template("index.html")
 
+def all_services():
+    return db.session.scalars(db.select(Service).order_by(Service.name)).all()
+
 
 @app.get("/join")
 def join_form():
-    return render_template("join.html", services=SERVICES, form={}, errors={})
+    return render_template("join.html", services=all_services(), form={}, errors={})
 
 
 @app.post("/join")
@@ -80,29 +67,41 @@ def join():
     name = form.get("name", "").strip()
     student_id = form.get("student_id", "").strip()
     service_id = form.get("service_id", type=int)
-    priority = form.get("priority") == "on"
+    is_priority = form.get("priority") == "on"
+    service = db.session.get(Service, service_id) if service_id else None
 
     errors = {}
-    if not name:
-        errors["name"] = "Enter your name or a nickname."
+    if not name or len(name) > 80:
+        errors["name"] = "Enter your name or a nickname (up to 80 characters)."
     if student_id and not re.fullmatch(r"\d{4}-\d{4}", student_id):
         errors["student_id"] = "Use the format YYYY-#### (for example 2022-0457), or leave it blank."
-    if service_id not in [s["id"] for s in SERVICES]:
+    if service is None:
         errors["service_id"] = "Choose a service."
 
     if errors:
         flash("Please fix the highlighted fields.", "danger")
-        return render_template("join.html", services=SERVICES, form=form,
-                               errors=errors), 400
+        return render_template("join.html", services=all_services(),
+                               form=form, errors=errors), 400
 
-    number = TICKETS[-1]["number"] + 1 if TICKETS else 1
-    TICKETS.append({
-        "number": number, "name": name, "student_id": student_id or None,
-        "service_id": service_id, "priority": priority,
-        "window": None, "status": "waiting",
-    })
-    flash(f"You joined the queue. Your ticket is #{number}.", "success")
-    return redirect(url_for("ticket", ticket_id=number))
+    visitor = None
+    if student_id:
+        visitor = db.session.scalar(db.select(Visitor).filter_by(student_id=student_id))
+    if visitor is None:
+        visitor = Visitor(name=name, student_id=student_id or None)
+
+    new_ticket = Ticket(visitor=visitor, service=service, is_priority=is_priority)
+    db.session.add(new_ticket)
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        flash("Something went wrong saving your ticket. Please try again.", "danger")
+        return render_template("join.html", services=all_services(),
+                               form=form, errors={}), 409
+
+    flash(f"You joined the queue. Your ticket is #{new_ticket.id}.", "success")
+    return redirect(url_for("ticket", ticket_id=new_ticket.id))
+
 
 def find_ticket(ticket_id):
     return next((t for t in TICKETS if t["number"] == ticket_id), None)
