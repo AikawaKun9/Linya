@@ -26,4 +26,4 @@
 
 ## Most serious problem
 
-As of now,, i couldn't find anything,, maybe i still haven't found it yet,,,,, maybe the email in my wireframe could be a problem but i already changed it,, is window panel a problem?? not sure,,
+In task 3 my aunt needed help because she did not understand the "Window number" field on the staff dashboard. Calling the next student is the staff's most frequent action, so this matters.

@@ -71,6 +71,14 @@ The participant was my aunt who works at the accounting center in Baranggay
 | 2. Find position and number | A moment of silence,, |
 | 3. Call next and serve as staff | Confused on the window panel |
 
+**Improvement:** 
+
+Confusing window panel,, what is the window??
+
+| Before | After |
+| --- | --- |
+| ![Before](screenshots/before-fix.png) | ![After](screenshots/after-fix.png) |
+
 ## 8. Reflection
 
 **Hardest this week:** It is getting the staff and student pages to stay in sync, and fixing bugs like the typos inside the codes and the mismatched element id, mixed with the ticking of the clock,, racing against time,, yess it was hard... 
