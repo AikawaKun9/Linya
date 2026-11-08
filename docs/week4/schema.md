@@ -9,7 +9,7 @@
 | FR-03 | Staff can call the next **ticket** and mark it served or no-show, with the **time** it was called. | ticket, time called | tickets, tickets.called_at |
 | FR-04 | A student gets an **alert** when their turn is near. | alert | *(no new column: it is the status changing to called)* |
 | FR-05 ★ | Staff can issue a **ticket** for a student without a phone. | ticket | tickets *(same table, no new column)* |
-| FR-06 | A registrar head can see peak **hours** and average **service time**. | hours, service time | tickets.created_at, *(service time needs a finished time, not stored yet)* |
+| FR-06 | A registrar head can see peak **hours** and average **service time**. | hours, service time | tickets.created_at, *(service time is computed)* |
 | FR-08 ★ | Staff assign a **window** when calling. | window | windows, tickets.window_id |
 | FR-10 | A student can **leave** the queue. | leave | tickets.status = 'left' *(the row stays)* |
 | FR-11 ★ | A student can join a **priority lane**. | priority lane | tickets.is_priority |
@@ -26,7 +26,7 @@ Two rules I followed: the queue is **not** a table (it is the tickets with statu
 | `visitors` | id, name, student_id (optional), created_at |
 | `services` | id, name, avg_minutes |
 | `windows` | id, number |
-| `tickets` | id, visitor_id, service_id, window_id (empty until called), status, is_priority, created_at, called_at |
+| `tickets` | id, visitor_id, service_id, window_id (empty until called), status, is_priority, created_at, called_at, finished_at |
 
 Where each Week 3 field went:
 - **Name and student ID:** facts about the person, so `visitors`.
@@ -54,6 +54,7 @@ Where each Week 3 field went:
 | tickets | is_priority | boolean | NOT NULL DEFAULT false | True or false, never text |
 | tickets | created_at | timestamptz | NOT NULL DEFAULT now() | Gives the order in the queue |
 | tickets | called_at | timestamptz | NULL allowed | Empty until the ticket is called |
+| tickets | finished_at | timestamptz | NULL allowed | Empty until served or no-show; with called_at it gives the service time |
 
 This uses every constraint type at least once: PRIMARY KEY, FOREIGN KEY, NOT NULL, UNIQUE, CHECK and timestamptz.
 
