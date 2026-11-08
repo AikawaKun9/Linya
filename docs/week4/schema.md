@@ -61,6 +61,7 @@ This uses every constraint type at least once: PRIMARY KEY, FOREIGN KEY, NOT NUL
 ## 2d. ERD
 
 ![ERD](erd.png)
+![ERD](ERD-revised.png)
 
 Relationships, read aloud:
 - One visitor has many tickets. A visitor who comes back later gets a new ticket.
