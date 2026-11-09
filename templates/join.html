@@ -26,7 +26,7 @@
 
       <div class="mb-3">
         <label for="name" class="form-label">Your name or nickname</label>
-        <input id="name" name="name" type="text" autocomplete="name" required
+        <input id="name" name="name" type="text" autocomplete="name" required maxlength="80"
                class="form-control {% if errors.name %}is-invalid{% endif %}"
                value="{{ form.get('name', '') }}"
                {% if errors.name %}aria-describedby="name-error"{% endif %}>
@@ -38,7 +38,8 @@
       <div class="mb-3">
         <label for="student_id" class="form-label">Student ID (optional)</label>
         <input id="student_id" name="student_id" type="text" inputmode="numeric"
-               autocomplete="off" placeholder="2022-0457"
+               autocomplete="off" placeholder="2022-0457" maxlength="9"
+               pattern="[0-9]{4}-[0-9]{4}"
                class="form-control {% if errors.student_id %}is-invalid{% endif %}"
                value="{{ form.get('student_id', '') }}"
                aria-describedby="student-id-hint{% if errors.student_id %} student-id-error{% endif %}">
