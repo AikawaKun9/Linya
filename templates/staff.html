@@ -7,7 +7,10 @@
   'called': 'text-bg-success'
 } %}
 
-<h1 class="h3 mb-3">Staff dashboard</h1>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">Staff dashboard</h1>
+  <a class="btn btn-outline-secondary" href="{{ url_for('services_list') }}">Manage services</a>
+</div>
 
 <div class="row g-3 align-items-end mb-4">
   <div class="col-12 col-md-5">
@@ -18,7 +21,7 @@
           <option value="">All services</option>
           {% for s in services %}
             <option value="{{ s.id }}" {% if selected == s.id %}selected{% endif %}>
-              {{ s.name }} ({{ counts.get(s.id, 0) }} waiting)
+              {{ s.name }}{% if not s.active %} (off){% endif %} ({{ counts.get(s.id, 0) }} waiting)
             </option>
           {% endfor %}
         </select>
@@ -33,9 +36,13 @@
     <form method="post" action="{{ url_for('call_next') }}" class="row g-2 align-items-end">
       {% if selected %}<input type="hidden" name="service_id" value="{{ selected }}">{% endif %}
       <div class="col-5 col-md-4">
-        <label for="window" class="form-label mb-1">Window number (counter)</label>
-        <input id="window" name="window" type="number" min="1" value="1" required
-               aria-describedby="window-help" class="form-control form-control-lg">
+        <label for="window" class="form-label mb-1">Window (counter)</label>
+        <select id="window" name="window" required aria-describedby="window-help"
+                class="form-select form-select-lg">
+          {% for w in windows %}
+            <option value="{{ w.number }}">Window {{ w.number }}</option>
+          {% endfor %}
+        </select>
       </div>
       <div class="col">
         <button type="submit" class="btn btn-primary btn-lg w-100">Call next</button>
@@ -91,6 +98,12 @@
               <button type="submit" class="btn btn-outline-danger btn-sm"
                       aria-label="No-show #{{ t.id }}: mark ticket {{ t.id }} as a no-show">No-show #{{ t.id }}</button>
             </form>
+            <form method="post" action="{{ url_for('delete_ticket', ticket_id=t.id) }}"
+                  data-confirm="Delete ticket {{ t.id }}? This cannot be undone.">
+              {% if selected %}<input type="hidden" name="service_id" value="{{ selected }}">{% endif %}
+              <button type="submit" class="btn btn-outline-secondary btn-sm"
+                      aria-label="Delete ticket {{ t.id }} permanently">Delete #{{ t.id }}</button>
+            </form>
           </div>
         </td>
       </tr>
@@ -108,8 +121,8 @@
 
 {% block scripts %}
 <script>
-  // Reload only the queue table every 10 seconds, so the window number
-  // field and the service filter keep whatever staff typed or chose.
+  // Reload only the queue table every 10 seconds, so the window dropdown
+  // and the service filter keep whatever staff chose.
   async function refreshQueue() {
     if (document.hidden) return;
     try {
