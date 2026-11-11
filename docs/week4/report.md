@@ -168,6 +168,4 @@ Full notes: [persistence.md](persistence.md)
 
 ## 12. Declaration
 
-## 12. Declaration
-
 I used Claude (an AI assistant) to help me install and understand Docker, draft `docs/requirements.md`, `schema.md` and `schema-review.md`, review my design, write and adapt the Docker Compose file, SQLAlchemy models, migrations, seed command, Flask routes, Jinja templates and JavaScript, explain the errors I ran into, suggest the `curl` and psql tests. I decided what my app stores for my setting (no email, an optional student ID, `is_priority` on tickets, a separate windows table), ran every command and test myself, took the screenshots, and checked each piece against my own results. 
