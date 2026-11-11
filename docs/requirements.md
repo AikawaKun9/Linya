@@ -21,8 +21,8 @@
 | FR-09 | A staff member can filter the waiting list by service. | Must | No | Built (Week 3) |
 | FR-10 | A student can leave the queue while waiting. | Should | Yes | Built (Week 3) |
 | FR-11 ★ | A PWD, senior citizen or pregnant student can join a priority lane that is called first. | Should | Yes | Built (Week 3) |
-| FR-12 | A staff member can add, rename, switch off and delete a service. | Must | Yes | This week |
-| FR-13 | A staff member can delete a ticket created by mistake. | Should | Yes | This week |
+| FR-12 | A staff member can add, rename, switch off and delete a service. | Must | Yes | Built (Week 4)|
+| FR-13 | A staff member can delete a ticket created by mistake. | Should | Yes | Built (Week 4) |
 
 ## Non-functional requirements
 
