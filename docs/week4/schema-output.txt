@@ -1,0 +1,64 @@
+                                       Table "public.visitors"
+   Column   |           Type           | Collation | Nullable |               Default                
+------------+--------------------------+-----------+----------+--------------------------------------
+ id         | integer                  |           | not null | nextval('visitors_id_seq'::regclass)
+ name       | character varying(80)    |           | not null | 
+ student_id | character varying(9)     |           |          | 
+ created_at | timestamp with time zone |           | not null | now()
+Indexes:
+    "visitors_pkey" PRIMARY KEY, btree (id)
+    "visitors_student_id_key" UNIQUE CONSTRAINT, btree (student_id)
+Check constraints:
+    "ck_visitors_student_id" CHECK (student_id::text ~ '^[0-9]{4}-[0-9]{4}$'::text)
+Referenced by:
+    TABLE "tickets" CONSTRAINT "tickets_visitor_id_fkey" FOREIGN KEY (visitor_id) REFERENCES visitors(id) ON DELETE RESTRICT
+
+                                      Table "public.services"
+   Column    |         Type          | Collation | Nullable |               Default                
+-------------+-----------------------+-----------+----------+--------------------------------------
+ id          | integer               |           | not null | nextval('services_id_seq'::regclass)
+ name        | character varying(60) |           | not null | 
+ avg_minutes | integer               |           | not null | 10
+ active      | boolean               |           | not null | true
+Indexes:
+    "services_pkey" PRIMARY KEY, btree (id)
+    "services_name_key" UNIQUE CONSTRAINT, btree (name)
+Check constraints:
+    "ck_services_avg_minutes" CHECK (avg_minutes > 0)
+Referenced by:
+    TABLE "tickets" CONSTRAINT "tickets_service_id_fkey" FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE RESTRICT
+
+                            Table "public.windows"
+ Column |  Type   | Collation | Nullable |               Default               
+--------+---------+-----------+----------+-------------------------------------
+ id     | integer |           | not null | nextval('windows_id_seq'::regclass)
+ number | integer |           | not null | 
+Indexes:
+    "windows_pkey" PRIMARY KEY, btree (id)
+    "windows_number_key" UNIQUE CONSTRAINT, btree (number)
+Check constraints:
+    "ck_windows_number" CHECK (number > 0)
+Referenced by:
+    TABLE "tickets" CONSTRAINT "tickets_window_id_fkey" FOREIGN KEY (window_id) REFERENCES windows(id) ON DELETE RESTRICT
+
+                                       Table "public.tickets"
+   Column    |           Type           | Collation | Nullable |               Default               
+-------------+--------------------------+-----------+----------+-------------------------------------
+ id          | integer                  |           | not null | nextval('tickets_id_seq'::regclass)
+ status      | character varying(20)    |           | not null | 'waiting'::character varying
+ is_priority | boolean                  |           | not null | false
+ created_at  | timestamp with time zone |           | not null | now()
+ called_at   | timestamp with time zone |           |          | 
+ finished_at | timestamp with time zone |           |          | 
+ visitor_id  | integer                  |           | not null | 
+ service_id  | integer                  |           | not null | 
+ window_id   | integer                  |           |          | 
+Indexes:
+    "tickets_pkey" PRIMARY KEY, btree (id)
+Check constraints:
+    "ck_tickets_status" CHECK (status::text = ANY (ARRAY['waiting'::character varying, 'called'::character varying, 'served'::character varying, 'no-show'::character varying, 'left'::character varying]::text[]))
+Foreign-key constraints:
+    "tickets_service_id_fkey" FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE RESTRICT
+    "tickets_visitor_id_fkey" FOREIGN KEY (visitor_id) REFERENCES visitors(id) ON DELETE RESTRICT
+    "tickets_window_id_fkey" FOREIGN KEY (window_id) REFERENCES windows(id) ON DELETE RESTRICT
+

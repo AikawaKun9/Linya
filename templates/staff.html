@@ -7,7 +7,10 @@
   'called': 'text-bg-success'
 } %}
 
-<h1 class="h3 mb-3">Staff dashboard</h1>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">Staff dashboard</h1>
+  <a class="btn btn-outline-secondary" href="{{ url_for('services_list') }}">Manage services</a>
+</div>
 
 <div class="row g-3 align-items-end mb-4">
   <div class="col-12 col-md-5">
@@ -18,7 +21,7 @@
           <option value="">All services</option>
           {% for s in services %}
             <option value="{{ s.id }}" {% if selected == s.id %}selected{% endif %}>
-              {{ s.name }} ({{ counts[s.id] }} waiting)
+              {{ s.name }}{% if not s.active %} (off){% endif %} ({{ counts.get(s.id, 0) }} waiting)
             </option>
           {% endfor %}
         </select>
@@ -33,12 +36,21 @@
     <form method="post" action="{{ url_for('call_next') }}" class="row g-2 align-items-end">
       {% if selected %}<input type="hidden" name="service_id" value="{{ selected }}">{% endif %}
       <div class="col-5 col-md-4">
-        <label for="window" class="form-label mb-1">Window number</label>
-        <input id="window" name="window" type="number" min="1" value="1" required
-               class="form-control form-control-lg">
+        <label for="window" class="form-label mb-1">Window (counter)</label>
+        <select id="window" name="window" required aria-describedby="window-help"
+                class="form-select form-select-lg">
+          {% for w in windows %}
+            <option value="{{ w.number }}">Window {{ w.number }}</option>
+          {% endfor %}
+        </select>
       </div>
       <div class="col">
         <button type="submit" class="btn btn-primary btn-lg w-100">Call next</button>
+      </div>
+      <div class="col-12">
+        <div id="window-help" class="form-text">
+          The student you call will see “Go to Window N” on their phone.
+        </div>
       </div>
     </form>
   </div>
@@ -56,33 +68,41 @@
         <th scope="col">Service</th>
         <th scope="col">Status</th>
         <th scope="col">Window</th>
+        <th scope="col">Joined</th>
         <th scope="col">Actions</th>
       </tr>
     </thead>
     <tbody>
       {% for t in queue %}
       <tr class="{% if t.status == 'called' %}table-success{% endif %}">
-        <th scope="row">{{ t.number }}</th>
+        <th scope="row">{{ t.id }}</th>
         <td>
-          {{ t.name }}
-          {% if t.priority %}<span class="badge text-bg-info">Priority</span>{% endif %}
+          {{ t.visitor.name }}
+          {% if t.is_priority %}<span class="badge text-bg-info">Priority</span>{% endif %}
         </td>
         <td>{{ names[t.service_id] }}</td>
         <td><span class="badge {{ badge_class[t.status] }}">{{ t.status|capitalize }}</span></td>
-        <td>{{ t.window or '—' }}</td>
+        <td>{{ t.window.number if t.window else '—' }}</td>
+        <td>{{ t.created_at|local }}</td>
         <td>
           <div class="d-flex gap-2">
             {% if t.status == 'called' %}
-            <form method="post" action="{{ url_for('staff_action', ticket_id=t.number, action='serve') }}">
+            <form method="post" action="{{ url_for('staff_action', ticket_id=t.id, action='serve') }}">
               {% if selected %}<input type="hidden" name="service_id" value="{{ selected }}">{% endif %}
               <button type="submit" class="btn btn-success btn-sm"
-                      aria-label="Serve #{{ t.number }}: mark ticket {{ t.number }} as served">Serve #{{ t.number }}</button>
+                      aria-label="Serve #{{ t.id }}: mark ticket {{ t.id }} as served">Serve #{{ t.id }}</button>
             </form>
             {% endif %}
-            <form method="post" action="{{ url_for('staff_action', ticket_id=t.number, action='no-show') }}">
+            <form method="post" action="{{ url_for('staff_action', ticket_id=t.id, action='no-show') }}">
               {% if selected %}<input type="hidden" name="service_id" value="{{ selected }}">{% endif %}
               <button type="submit" class="btn btn-outline-danger btn-sm"
-                      aria-label="No-show #{{ t.number }}: mark ticket {{ t.number }} as a no-show">No-show #{{ t.number }}</button>
+                      aria-label="No-show #{{ t.id }}: mark ticket {{ t.id }} as a no-show">No-show #{{ t.id }}</button>
+            </form>
+            <form method="post" action="{{ url_for('delete_ticket', ticket_id=t.id) }}"
+                  data-confirm="Delete ticket {{ t.id }}? This cannot be undone.">
+              {% if selected %}<input type="hidden" name="service_id" value="{{ selected }}">{% endif %}
+              <button type="submit" class="btn btn-outline-secondary btn-sm"
+                      aria-label="Delete ticket {{ t.id }} permanently">Delete #{{ t.id }}</button>
             </form>
           </div>
         </td>
@@ -101,8 +121,8 @@
 
 {% block scripts %}
 <script>
-  // Reload only the queue table every 10 seconds, so the window number
-  // field and the service filter keep whatever staff typed or chose.
+  // Reload only the queue table every 10 seconds, so the window dropdown
+  // and the service filter keep whatever staff chose.
   async function refreshQueue() {
     if (document.hidden) return;
     try {

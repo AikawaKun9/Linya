@@ -4,12 +4,18 @@ Linya is a queue system for the campus registrar. Students get a queue number fo
 
 ## Run it
 
+    copy .env.example .env          # then put your own password in .env
+    docker compose up -d            # starts PostgreSQL 17
     python -m venv .venv
     .venv\Scripts\activate          # macOS/Linux: source .venv/bin/activate
     pip install -r requirements.txt
+    flask --app app db upgrade      # creates the tables
+    flask --app app seed            # adds the services and windows
     flask --app app run --debug
 
-Then open http://127.0.0.1:5000.
+  Then open http://127.0.0.1:5000.
+
+  Requirements: [docs/requirements.md](docs/requirements.md)
 
 ## Screens
 
@@ -20,4 +26,4 @@ Then open http://127.0.0.1:5000.
 | `/queue/<number>` | My place (ticket number, status, people ahead) |
 | `/staff` | Staff dashboard |
 
-Note: the staff dashboard has no login yet. Staff login is planned for a later week. Tickets live in a Python list, so they reset when the server restarts; Week 4 moves them into PostgreSQL.
+Note: the staff dashboard has no login yet. Staff login is planned for a later week. Tickets are now stored into PostgreSQL.

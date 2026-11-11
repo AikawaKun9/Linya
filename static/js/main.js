@@ -1,4 +1,4 @@
-// 8a. Stop double joining: disable the button once the form is submitted.
+// Stop double joining: disable the button once the form is submitted.
 const joinForm = document.getElementById("join-form");
 if (joinForm) {
   const button = joinForm.querySelector("button[type=submit]");
@@ -15,3 +15,11 @@ if (joinForm) {
     button.textContent = originalText;
   });
 }
+
+// Ask before anything that cannot be undone: <form data-confirm="...">.
+document.addEventListener("submit", (event) => {
+  const form = event.target;
+  if (form.matches && form.matches("form[data-confirm]")) {
+    if (!confirm(form.dataset.confirm)) event.preventDefault();
+  }
+});
