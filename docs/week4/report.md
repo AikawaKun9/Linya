@@ -11,7 +11,7 @@
 | **Section** | [  ] |
 | **Date** | [  ] |
 | **Database** | PostgreSQL 17 in Docker (no local fallback) |
-| **Pull request** | [paste the PR link] |
+| **Pull request** | https://github.com/AikawaKun9/Linya/pull/4 |
 
 ## 2. Requirements
 
